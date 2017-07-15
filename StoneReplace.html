@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+    <meta content="text/html" charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+</HEAD>
+
+<BODY>
+    <canvas id="canv" width="500px" height="500px"></canvas>
+    <script>
+        var COL=8;
+        var RECT_BOARD ={
+          x:0,
+          y:0,
+          w:500,
+          h:500
+        };
+        var point = {
+            x: 0,
+            y: 0
+        }
+        var CELL_SIZE=50;
+        var BOARD_COLOR="#F5DEB3";
+        var COLOR_WHITE = "#FFFFFF";
+        var COLOR_BLACK = "#000000";
+        var COLOR_LINE="#000000";
+        var state={
+          map: [0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, -1, 1, 0, 0, 0,
+                 0, 0, 0, 1, -1, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0,
+                 ],
+        };
+        var selected = {
+          name:"",
+          value:0
+        };
+        var BOARD_STATE = 0;
+        var MOVE_FLG=false;
+        var pre_selected ={
+          value:0
+        };
+      function render(ctx,state){
+              ctx.clearRect(0,0,RECT_BOARD.w,RECT_BOARD.h);
+              drawBoard(ctx);
+              if(BOARD_STATE > 0){
+                if(MOVE_FLG=true && (selected.value != pre_selected.value)){//前の場所と違うところがクリックされたら移動
+                  state.map[pre_selected.value]=0;
+                  MOVE_FLG=false;
+                }
+                if(state.map[selected.value] == 0){
+                  state.map[selected.value] = 1;
+                }
+                else {
+                  drawEffect(ctx,selected.value);
+                  MOVE_FLG=true;
+                  pre_selected.value=selected.value;//次の石の描写で移動させるために、前の場所を覚えて置く。
+                }
+              }
+              ctx.globalAlpha=1.0;
+              drawPieceAll(ctx,state);
+
+      }
+      function drawBoard(ctx){
+        for (var x = 0; x < COL; x++) {
+         for (var y = 0; y < COL; y++) {
+             ctx.fillStyle = BOARD_COLOR;
+             ctx.strokeStyle = COLOR_LINE;
+             ctx.beginPath();
+             ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+             ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+         }
+      }
+      }
+      function drawPieceAll(ctx,state){
+        for (var x = 0; x < COL; x++) {
+          for (var y = 0; y < COL; y++) {
+            if (state.map[y * COL + x] != 0) {
+            drawPiece(ctx, x * CELL_SIZE, y * CELL_SIZE, state.map[y * COL + x]);
+          }
+        }
+      }
+      }
+      function drawPiece(ctx,x,y,number){
+        var fill_color;
+        if(number>0){
+          fill_color=COLOR_WHITE;
+        }
+        else if(number <0){
+          fill_color=COLOR_BLACK;
+        }
+        ctx.fillStyle=fill_color;
+        ctx.beginPath();
+        ctx.fillRect(x + CELL_SIZE / 10, y + CELL_SIZE / 10, CELL_SIZE - 1 * CELL_SIZE / 5, CELL_SIZE - 1 * CELL_SIZE / 5);
+
+      }
+
+      function setEvents(){
+        ctx.canvas.addEventListener('mouseup',ev_mouseClick);
+      }
+
+      function ev_mouseClick(e){
+        getMousePosition(e);
+        hitTest(point.x,point.y);
+        if(selected.name == "RECT_BOARD"){
+          BOARD_STATE += 1;
+          render(ctx,state);
+          }
+        }
+
+
+
+      function getMousePosition(e){
+        var rect = e.target.getBoundingClientRect();
+        point.x = e.clientX - rect.left;
+        point.y = e.clientY - rect.top;
+      }
+      function hitTest(x,y){
+        if(RECT_BOARD.w >= x && RECT_BOARD.x <= x && RECT_BOARD.h >= y && RECT_BOARD.y <= y ){
+          selected.name = "RECT_BOARD";
+          selected.value = Math.floor(y/CELL_SIZE)*COL + Math.floor(x/CELL_SIZE)　//クリックした二次元の場所をstateの一次元の場所に変換
+        }
+      }
+      function drawEffect(ctx,number){
+        var x=number % COL | 0;//何列目か
+        var y=number / COL | 0;//何行目か
+        for (var i = -1; i <= 1; i++) {//周囲のマスを再配置候補表示とする。
+          for (var j = -1; j <= 1; j++) {
+            ctx.globalAlpha=0.5;
+            ctx.lineWidth = 1;
+            ctx.fillStyle = COLOR_BLACK;
+            if(state.map[(y+j)*COL+(x+i)] == 0){//石が置いてあったら表示しない
+            ctx.beginPath();
+            ctx.fillRect((x+i)*CELL_SIZE,(y+j)*CELL_SIZE,CELL_SIZE,CELL_SIZE);
+            ctx.strokeRect((x+i)*CELL_SIZE,(y+j)*CELL_SIZE,CELL_SIZE,CELL_SIZE);
+            }
+          }
+        }
+      }
+
+        var ctx = document.getElementById("canv").getContext('2d');
+        setEvents();
+        render(ctx,state);
+    </script>
+    <style>
+        #canv {
+            height: 500px;
+            width: 500px;
+            float: left;
+        }
+    </style>
+</BODY>
+
+</HTML>
